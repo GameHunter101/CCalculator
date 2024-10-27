@@ -1,0 +1,21 @@
+IDIR = ../include
+CC = clang
+CFLAGS = -I$(IDIR) -Wall -Wextra -g
+
+ODIR = ./obj
+LDIR = ../lib
+
+LIBS=
+
+_DEPS = parser.h stack.h
+DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
+
+_OBJ = main.o parser.o stack.o
+OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
+
+
+$(ODIR)/%.o: %.c $(DEPS)
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+calculator: $(OBJ)
+	$(CC) -o ../bin/$@ $^ $(CFLAGS) $(LIBS)
