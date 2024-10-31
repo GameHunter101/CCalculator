@@ -7,7 +7,7 @@ LDIR = ../lib
 
 LIBS=
 
-_DEPS = parser.h stack.h
+_DEPS = parser.h stack.h individuals.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
 _OBJ = main.o parser.o stack.o
@@ -18,4 +18,4 @@ $(ODIR)/%.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 calculator: $(OBJ)
-	$(CC) -o ../bin/$@ $^ $(CFLAGS) $(LIBS)
+	$(CC) -o ../bin/$@.exe $^ $(CFLAGS) $(LIBS)
