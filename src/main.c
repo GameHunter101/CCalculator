@@ -21,7 +21,7 @@ int main() {
 
     printf("Tree:\n");
     Node tree = createTree(&stack);
-    printf("Final value: %i", executeNode(&tree));
+    printf("Final value: %f", executeNode(&tree));
 
     return 0;
 }

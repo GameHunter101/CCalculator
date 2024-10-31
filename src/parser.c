@@ -42,7 +42,7 @@ AllTokens tokenize(FileData data) {
         Token *tokens = calloc(tokenCount, sizeof(tempToken));
         for (int i = 0; i < tokenCount; i++) {
             char *queriedTokenString = stringTokens[i];
-            Token token = {.type = ValueToken, .data.value = 0};
+            Token token = {.type = ValueToken, .data.value = 0.0f};
             if (strlen(queriedTokenString) == 1) {
                 for (int j = 0; j < OPERATIONS_COUNT; j++) {
                     if ((*queriedTokenString) == OPERATIONS[j]) {
@@ -55,7 +55,7 @@ AllTokens tokenize(FileData data) {
             if (token.type != OperandToken) {
                 errno = 0;
                 char *end;
-                long value = strtol(queriedTokenString, &end, 10);
+                float value = strtof(queriedTokenString, &end);
                 token.data.value = value;
                 token.type = ValueToken;
             }
@@ -76,7 +76,7 @@ void printToken(Token *token) {
     }
     switch (token->type) {
     case ValueToken:
-        printf("Value: %i\n", token->data.value);
+        printf("Value: %f\n", token->data.value);
         break;
     case OperandToken: {
         char thisOp;

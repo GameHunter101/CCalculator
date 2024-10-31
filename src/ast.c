@@ -25,12 +25,12 @@ Node createTree(Stack *stack) {
     return node;
 }
 
-int executeNode(Node *root) {
+float executeNode(Node *root) {
     if (root->data.type == ValueToken) {
         return root->data.data.value;
     }
-    int leftValue = executeNode(root->left);
-    int rightValue = executeNode(root->right);
+    float leftValue = executeNode(root->left);
+    float rightValue = executeNode(root->right);
     switch (root->data.data.op) {
     case Addition:
         return leftValue + rightValue;

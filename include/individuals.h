@@ -15,7 +15,7 @@ typedef enum {
 typedef struct {
     TokenType type;
     union {
-        int value;
+        float value;
         Operand op;
     } data;
 } Token;
