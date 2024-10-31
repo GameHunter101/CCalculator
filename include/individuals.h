@@ -1,3 +1,5 @@
+#ifndef INDIVIDUALS_H
+#define INDIVIDUALS_H
 typedef enum {
     Addition,
     Subtraction,
@@ -23,3 +25,4 @@ typedef struct Node {
     struct Node *left;
     struct Node *right;
 } Node;
+#endif //INDIVIDUALS_H

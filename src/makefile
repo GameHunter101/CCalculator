@@ -7,10 +7,10 @@ LDIR = ../lib
 
 LIBS=
 
-_DEPS = parser.h stack.h individuals.h
+_DEPS = parser.h stack.h individuals.h ast.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ = main.o parser.o stack.o
+_OBJ = main.o parser.o stack.o ast.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 

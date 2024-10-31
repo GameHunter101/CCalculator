@@ -11,7 +11,5 @@ typedef struct {
 } AllTokens;
 
 FileData getData(char *);
-
 AllTokens tokenize(FileData);
-
 void printToken(Token *);

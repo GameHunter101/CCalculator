@@ -2,6 +2,8 @@
 #include <stdlib.h>
 
 #include "../include/stack.h"
+#include "../include/parser.h"
+#include "../include/ast.h"
 
 int main() {
     FileData data = getData("../data.txt");
@@ -10,15 +12,16 @@ int main() {
 
     free(data.string);
 
-    Stack stack = {
-        .data = calloc(2, sizeof(tokens.tokens[0])), .size = 0, .maxSize = 2};
+    Stack stack = newStack();
 
     for (int i = 0; i < tokens.tokenCount; i++) {
         Token thisToken = tokens.tokens[i];
         push(&stack, thisToken);
     }
 
-    printToken(peek(&stack));
+    printf("Tree:\n");
+    Node tree = createTree(&stack);
+    printf("Final value: %i", executeNode(&tree));
 
     return 0;
 }
