@@ -1,14 +1,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../include/stack.h"
-#include "../include/parser.h"
 #include "../include/ast.h"
+#include "../include/parser.h"
+#include "../include/stack.h"
 
 int main() {
     FileData data = getData("../data.txt");
 
-    AllTokens tokens = tokenize(data);
+    AllTokens tokens = splitStringTokens(data, 0);
+
+    printf("Main print:\n");
+    for (int i = 0; i < tokens.tokenCount; i++) {
+        printToken(&tokens.tokens[i]);
+    }
+
+    free(tokens.tokens);
+    free(data.string);
+
+    /* AllTokens tokens = tokenize(data);
 
     free(data.string);
 
@@ -21,7 +31,7 @@ int main() {
 
     printf("Tree:\n");
     Node tree = createTree(&stack);
-    printf("Final value: %f", executeNode(&tree));
+    printf("Final value: %f", executeNode(&tree)); */
 
     return 0;
 }

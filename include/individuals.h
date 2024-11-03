@@ -1,22 +1,33 @@
 #ifndef INDIVIDUALS_H
 #define INDIVIDUALS_H
 typedef enum {
-    Addition,
-    Subtraction,
-    Multiplication,
-    Division,
+    ScalarScalarAddition,
+    ScalarScalarSubtraction,
+    ScalarScalarMultiplication,
+    ScalarScalarDivision,
+    VectorAddition,
+    VectorSubtraction,
+    VectorScalarMultiplication,
+    VectorScalarDivision,
 } Operand;
 
 typedef enum {
-    ValueToken,
+    ScalarValueToken,
+    VectorValueToken,
     OperandToken,
 } TokenType;
+
+typedef struct {
+    float *components;
+    int dimension;
+} VectorData;
 
 typedef struct {
     TokenType type;
     union {
         float value;
         Operand op;
+        VectorData vectorData;
     } data;
 } Token;
 

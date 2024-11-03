@@ -1,6 +1,7 @@
 #include "../include/ast.h"
 #include "../include/parser.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -10,7 +11,7 @@ Node createTree(Stack *stack) {
     if (errno == 1) {
         return blank;
     }
-    if (top.type == ValueToken) {
+    if (top.type == ScalarValueToken) {
         Node leaf = {.data = top, .left = NULL, .right = NULL};
         return leaf;
     }
@@ -26,20 +27,22 @@ Node createTree(Stack *stack) {
 }
 
 float executeNode(Node *root) {
-    if (root->data.type == ValueToken) {
+    if (root->data.type == ScalarValueToken) {
         return root->data.data.value;
     }
     float leftValue = executeNode(root->left);
     float rightValue = executeNode(root->right);
     switch (root->data.data.op) {
-    case Addition:
+    case ScalarScalarAddition:
         return leftValue + rightValue;
-    case Subtraction:
+    case ScalarScalarSubtraction:
         return leftValue - rightValue;
-    case Multiplication:
+    case ScalarScalarMultiplication:
         return leftValue * rightValue;
-    case Division:
+    case ScalarScalarDivision:
         return leftValue / rightValue;
+    default:
+        return INT_MAX;
     }
 }
 
