@@ -6,8 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-const static char OPERATIONS[4] = {'+', '-', '*', '/'};
 const static int OPERATIONS_COUNT = 4;
+const static char OPERATIONS[OPERATIONS_COUNT] = {'+', '-', '*', '/'};
 
 int floatStringSize(float num) {
     if (num == 0) {
@@ -111,9 +111,12 @@ Token parseToken(char *queriedTokenString) {
 
 int indexOf(char *string, char target, int startIndex, int stringLength) {
     // printf("Start: %i, length: %i", startIndex, stringLength);
+    if (startIndex >= stringLength) {
+        return INT_MAX;
+    }
     for (int i = startIndex; i < stringLength; i++) {
-        // printf("Start: %i, Index for %c: %i, current char: %c\n", startIndex,
-        // target, i, string[i]);
+        /* printf("Start: %i, Index for %c: %i, current char: %c\n", startIndex,
+               target, i, string[i]); */
         if (string[i] == target) {
             return i;
         }
@@ -121,87 +124,71 @@ int indexOf(char *string, char target, int startIndex, int stringLength) {
     return INT_MAX;
 }
 
-AllTokens splitStringTokens(FileData fileData, int startingIndex) {
-    int nearestBracketIndex =
-        indexOf(fileData.string, '[', startingIndex, fileData.stringLength);
-    int nearestSpaceIndex =
-        indexOf(fileData.string, ' ', startingIndex, fileData.stringLength);
-    int nearestIndex = min(nearestSpaceIndex, nearestBracketIndex);
-    AllTokens blankTokens = {.tokens = NULL, .tokenCount = 0};
+char *createFragment(int startIndex, int nextIndex, char *inputStr) {
+    int size = nextIndex - startIndex;
+    char *fragStr = calloc(size, 1);
+    memcpy(fragStr, inputStr + startIndex, size);
+    return fragStr;
+}
 
-    if (nearestIndex == INT_MAX) {
-        if (fileData.stringLength - startingIndex == 0) {
-            return blankTokens;
+AllFragments splitStringTokens(FileData fileData) {
+    int seperatorCount = 2;
+    Separator bracketSeparator = {.type = WrappingCharacters,
+                                  .separator.wrapping = "[]"};
+    Separator spaceSeparator = {.type = SingleCharacter,
+                                .separator.single = ' '};
+    Separator commaSeparator = {.type = SingleCharacter,
+                                .separator.single = ','};
+
+    Separator separators[] = {bracketSeparator, spaceSeparator, commaSeparator};
+    int separatorCount = 3;
+
+    char *inputStr = fileData.string;
+    int strLen = fileData.stringLength;
+
+    char **fragments = calloc(strLen, sizeof(char *));
+    int fragmentCount = 0;
+
+    int fragmentStartIndex = 0;
+    while (fragmentStartIndex < strLen) {
+        // printf("Start: %i, ", fragmentStartIndex);
+        int fragmentEndIndex = INT_MAX;
+        for (int i = 0; i < separatorCount; i++) {
+            Separator separator = separators[i];
+            if (separator.type == SingleCharacter) {
+                fragmentEndIndex =
+                    min(min(fragmentEndIndex,
+                            indexOf(inputStr, separator.separator.single,
+                                    fragmentStartIndex, strLen)),
+                        strLen);
+            }
+            if (separator.type == WrappingCharacters &&
+                separator.separator.wrapping[0] ==
+                    inputStr[fragmentStartIndex]) {
+                fragmentEndIndex =
+                    indexOf(inputStr, separator.separator.wrapping[1],
+                            fragmentStartIndex, strLen) + 1;
+
+                break;
+            }
         }
-        int tokenSize = fileData.stringLength - startingIndex;
-        char str[tokenSize + 1];
-        memcpy(str, fileData.string + startingIndex,
-               fileData.stringLength - startingIndex);
-        str[tokenSize] = 0;
-        printf("Final: %s\n", str);
-        Token token = parseToken(str);
-        Token *tokenArr = calloc(1, sizeof(token));
-        tokenArr[0] = token;
-        AllTokens tokens = {.tokens = tokenArr, .tokenCount = 1};
-        return tokens;
-    }
-
-    // printf("Nearest: %i\n", nearestIndex);
-
-    int tokenSize = nearestIndex - startingIndex;
-    char str[tokenSize + 1];
-    memcpy(str, fileData.string + startingIndex, tokenSize);
-    str[tokenSize] = 0;
-    printf("String: %s\n", str);
-
-    int nextIndex = nearestIndex + 1;
-
-    if (nearestBracketIndex - nearestSpaceIndex == 1) {
-        nextIndex++;
-    }
-
-    AllTokens previousTokens = splitStringTokens(fileData, nextIndex);
-    int tokenCount = previousTokens.tokenCount + 1;
-    if (str[0] == 0) {
-        return previousTokens;
-    }
-
-    // printf("Starting: %i, Nearest: %i, brackets: %i\n", startingIndex,
-    // nearestIndex, nearestBracketIndex);
-
-    if (fileData.string[startingIndex - 1] == '[') {
-        int closeBracketIndex = indexOf(fileData.string, ']', startingIndex - 1,
-                                        fileData.stringLength);
-        int bracketContentsSize = closeBracketIndex - startingIndex;
-        char bracketContents[bracketContentsSize + 1];
-        memcpy(bracketContents, fileData.string+startingIndex, bracketContentsSize);
-        bracketContents[bracketContentsSize] = 0;
-        printf("Contents: %s\n", bracketContents);
-        char *stringToken = strtok(bracketContents, ", ");
-
-        AllTokens bracketsTokens = {.tokens = calloc(bracketContentsSize + previousTokens.tokenCount, sizeof(Token))};
-        int tokenCount = 0;
-        while (stringToken != NULL) {
-            Token thisToken = parseToken(stringToken);
-            bracketsTokens.tokens[tokenCount] = thisToken;
-            tokenCount++;
-            stringToken = strtok(NULL, ", ");
+        // printf("end: %i\n", fragmentEndIndex);
+        char *fragment =
+            createFragment(fragmentStartIndex, fragmentEndIndex, inputStr);
+        if (fragment[0] != 0) {
+            // printf("frag: %s\n", fragment);
+            fragments[fragmentCount] = fragment;
+            fragmentCount++;
         }
-        tokenCount += previousTokens.tokenCount;
-        memcpy(bracketsTokens.tokens + tokenCount * sizeof(Token), previousTokens.tokens, previousTokens.tokenCount);
-        return bracketsTokens;
+        fragmentStartIndex = fragmentEndIndex + 1;
+    }
+    for (int i = 0; i < fragmentCount; i++) {
+        printf("Frag: %s\n", fragments[i]);
     }
 
-    Token token = parseToken(str);
-
-    AllTokens tokens = {.tokenCount = tokenCount};
-    Token *tokenArr = calloc(tokenCount, sizeof(token));
-    tokenArr[0] = token;
-    memcpy(tokenArr + 1, previousTokens.tokens,
-           previousTokens.tokenCount * sizeof(token));
-    tokens.tokens = tokenArr;
-
-    return tokens;
+    AllFragments allFragments = {.fragments = fragments,
+                                 .fragmentCount = fragmentCount};
+    return allFragments;
 }
 
 void printToken(Token *token) {

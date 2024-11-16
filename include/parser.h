@@ -15,7 +15,30 @@ typedef struct {
     int tokenCount;
 } StringTokens;
 
+typedef enum {
+    SingleCharacter,
+    WrappingCharacters,
+} SeparatorType;
+
+typedef struct {
+    SeparatorType type;
+    union {
+        char single;
+        char wrapping[2];
+    } separator;
+} Separator;
+
+typedef struct {
+    int index;
+    char *str;
+} InputFragment;
+
+typedef struct {
+    char **fragments;
+    int fragmentCount;
+} AllFragments;
+
 FileData getData(char *);
 AllTokens tokenize(FileData);
 void printToken(Token *);
-AllTokens splitStringTokens(FileData, int);
+AllFragments splitStringTokens(FileData);
