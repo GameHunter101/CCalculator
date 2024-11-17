@@ -7,7 +7,17 @@
 #include <string.h>
 
 const static int OPERATIONS_COUNT = 4;
-const static char OPERATIONS[OPERATIONS_COUNT] = {'+', '-', '*', '/'};
+const static char *OPERATIONS[OPERATIONS_COUNT] = {"+", "-", "*", "/"};
+
+const Separator BRACKET_SEPARATOR = {.type = WrappingCharacters,
+                                     .separator.wrapping = "[]"};
+const Separator SPACE_SEPARATOR = {.type = SingleCharacter,
+                                   .separator.single = ' '};
+const Separator COMMA_SEPARATOR = {.type = SingleCharacter,
+                                   .separator.single = ','};
+
+int SEPARATOR_COUNT = 3;
+Separator SEPARATORS[] = {BRACKET_SEPARATOR, SPACE_SEPARATOR, COMMA_SEPARATOR};
 
 int floatStringSize(float num) {
     if (num == 0) {
@@ -32,91 +42,90 @@ FileData getData(char *path) {
     return data;
 }
 
-AllTokens tokenize(FileData data) {
-    char *stringTokens[data.stringLength];
-    char *currentTokenString = strtok(data.string, " ");
-    if (currentTokenString != NULL) {
-        int tokenCount = 1;
-        stringTokens[0] = currentTokenString;
-        if (currentTokenString != NULL && currentTokenString[0] == '[') {
-            printf("Index: 0\n");
-        }
-        for (int i = 1; i < data.stringLength; i++) {
-            currentTokenString = strtok(NULL, " ");
-            if (currentTokenString != NULL) {
-                if (currentTokenString[0] == '[' ||
-                    currentTokenString[strlen(currentTokenString) - 1] == ']') {
-                    printf("Index: %i\n", i);
-                }
-                stringTokens[i] = currentTokenString;
-                tokenCount++;
-            } else {
-                break;
-            }
-        }
-        Token tempToken;
-        Token *tokens = calloc(tokenCount, sizeof(tempToken));
-        for (int i = 0; i < tokenCount; i++) {
-            char *queriedTokenString = stringTokens[i];
-            Token token = {.type = ScalarValueToken, .data.value = 0.0f};
-            if (strlen(queriedTokenString) == 1) {
-                int j;
-                for (j = 0; j < OPERATIONS_COUNT; j++) {
-                    if ((*queriedTokenString) == OPERATIONS[j]) {
-                        token.data.op = j;
-                        token.type = OperandToken;
-                        break;
-                    }
-                }
-            }
-            if (token.type != OperandToken) {
-                errno = 0;
-                char *end;
-                float value = strtof(queriedTokenString, &end);
-                token.data.value = value;
-                token.type = ScalarValueToken;
-            }
-            tokens[i] = token;
-        }
-        AllTokens allTokens = {tokens, tokenCount};
-
-        return allTokens;
-    }
-
-    AllTokens nothing = {.tokens = NULL, .tokenCount = 0};
-    return nothing;
-}
-
-Token parseToken(char *queriedTokenString) {
+Token parseToken(char *fragment) {
     Token token = {.type = ScalarValueToken, .data.value = 0.0f};
-    if (strlen(queriedTokenString) == 1) {
-        int j;
-        for (j = 0; j < OPERATIONS_COUNT; j++) {
-            if ((*queriedTokenString) == OPERATIONS[j]) {
-                token.data.op = j;
-                token.type = OperandToken;
+    for (int i = 0; i < OPERATIONS_COUNT; i++) {
+        // printf("fragment: %s, operation: %s.\n", fragment, OPERATIONS[i]);
+        if (strcmp(fragment, OPERATIONS[i]) == 0) {
+            token.type = OperandToken;
+            switch (i) {
+            case 0:
+                token.data.op = Addition;
+                break;
+            case 1:
+                token.data.op = Subtraction;
+                break;
+            case 2:
+                token.data.op = Multiplication;
+                break;
+            case 3:
+                token.data.op = Division;
                 break;
             }
+            free(fragment);
+            // printf("Operand: \n");
+            // printToken(&token);
+            return token;
         }
     }
-    if (token.type != OperandToken) {
-        errno = 0;
-        char *end;
-        float value = strtof(queriedTokenString, &end);
-        token.data.value = value;
-        token.type = ScalarValueToken;
+    for (int i = 0; i < SEPARATOR_COUNT; i++) {
+        if (SEPARATORS[i].type == WrappingCharacters &&
+            SEPARATORS[i].separator.wrapping[0] == fragment[0]) {
+            token.type = VectorValueToken;
+            char *clippedStr = &fragment[1];
+            clippedStr[strlen(clippedStr) - 1] = 0;
+            // printf("Clipped: %s\n", clippedStr);
+            FileData vectorData = {.string = clippedStr,
+                                   .stringLength = strlen(clippedStr)};
+            AllFragments vectorFragments = splitStringFragments(vectorData);
+            AllTokens vectorTokens = tokenize(vectorFragments);
+            token.data.vectorData.dimension = vectorTokens.tokenCount;
+            if (vectorTokens.tokenCount == 0) {
+                return token;
+            }
+            float *components = calloc(vectorTokens.tokenCount, sizeof(float));
+            for (int i = 0; i < vectorTokens.tokenCount; i++) {
+                components[i] = vectorTokens.tokens[i].data.value;
+            }
+            token.data.vectorData.components = components;
+            /* printf("Vector (size: %i): \n", token.data.vectorData.dimension);
+            printToken(&token);
+            printf("\n"); */
+            free(fragment);
+            return token;
+        }
     }
+
+    float value = strtof(fragment, NULL);
+    token.type = ScalarValueToken;
+    token.data.value = value;
+
+    free(fragment);
     return token;
 }
 
+AllTokens tokenize(AllFragments fragments) {
+    Token *tokens = calloc(fragments.fragmentCount, sizeof(Token));
+    int tokenCount = fragments.fragmentCount;
+    for (int i = 0; i < fragments.fragmentCount; i++) {
+        Token token = parseToken(fragments.fragments[i]);
+        if (token.type == VectorValueToken &&
+            token.data.vectorData.dimension == 0) {
+            tokenCount--;
+            continue;
+        }
+        tokens[i] = token;
+    }
+    AllTokens allTokens = {.tokens = tokens,
+                           .tokenCount = tokenCount};
+    return allTokens;
+}
+
 int indexOf(char *string, char target, int startIndex, int stringLength) {
-    // printf("Start: %i, length: %i", startIndex, stringLength);
     if (startIndex >= stringLength) {
         return INT_MAX;
     }
     for (int i = startIndex; i < stringLength; i++) {
-        /* printf("Start: %i, Index for %c: %i, current char: %c\n", startIndex,
-               target, i, string[i]); */
         if (string[i] == target) {
             return i;
         }
@@ -131,17 +140,7 @@ char *createFragment(int startIndex, int nextIndex, char *inputStr) {
     return fragStr;
 }
 
-AllFragments splitStringTokens(FileData fileData) {
-    int seperatorCount = 2;
-    Separator bracketSeparator = {.type = WrappingCharacters,
-                                  .separator.wrapping = "[]"};
-    Separator spaceSeparator = {.type = SingleCharacter,
-                                .separator.single = ' '};
-    Separator commaSeparator = {.type = SingleCharacter,
-                                .separator.single = ','};
-
-    Separator separators[] = {bracketSeparator, spaceSeparator, commaSeparator};
-    int separatorCount = 3;
+AllFragments splitStringFragments(FileData fileData) {
 
     char *inputStr = fileData.string;
     int strLen = fileData.stringLength;
@@ -151,10 +150,9 @@ AllFragments splitStringTokens(FileData fileData) {
 
     int fragmentStartIndex = 0;
     while (fragmentStartIndex < strLen) {
-        // printf("Start: %i, ", fragmentStartIndex);
         int fragmentEndIndex = INT_MAX;
-        for (int i = 0; i < separatorCount; i++) {
-            Separator separator = separators[i];
+        for (int i = 0; i < SEPARATOR_COUNT; i++) {
+            Separator separator = SEPARATORS[i];
             if (separator.type == SingleCharacter) {
                 fragmentEndIndex =
                     min(min(fragmentEndIndex,
@@ -167,23 +165,19 @@ AllFragments splitStringTokens(FileData fileData) {
                     inputStr[fragmentStartIndex]) {
                 fragmentEndIndex =
                     indexOf(inputStr, separator.separator.wrapping[1],
-                            fragmentStartIndex, strLen) + 1;
+                            fragmentStartIndex, strLen) +
+                    1;
 
                 break;
             }
         }
-        // printf("end: %i\n", fragmentEndIndex);
         char *fragment =
             createFragment(fragmentStartIndex, fragmentEndIndex, inputStr);
         if (fragment[0] != 0) {
-            // printf("frag: %s\n", fragment);
             fragments[fragmentCount] = fragment;
             fragmentCount++;
         }
         fragmentStartIndex = fragmentEndIndex + 1;
-    }
-    for (int i = 0; i < fragmentCount; i++) {
-        printf("Frag: %s\n", fragments[i]);
     }
 
     AllFragments allFragments = {.fragments = fragments,
@@ -203,20 +197,16 @@ void printToken(Token *token) {
     case OperandToken: {
         char thisOp;
         switch (token->data.op) {
-        case VectorAddition:
-        case ScalarScalarAddition:
+        case Addition:
             thisOp = '+';
             break;
-        case VectorSubtraction:
-        case ScalarScalarSubtraction:
+        case Subtraction:
             thisOp = '-';
             break;
-        case VectorScalarMultiplication:
-        case ScalarScalarMultiplication:
+        case Multiplication:
             thisOp = '*';
             break;
-        case VectorScalarDivision:
-        case ScalarScalarDivision:
+        case Division:
             thisOp = '/';
             break;
         default:
@@ -236,6 +226,7 @@ void printToken(Token *token) {
             componentSizes[i] = componentSize;
         }
         char str[stringSize];
+        str[0] = 0;
         for (int i = 0; i < token->data.vectorData.dimension; i++) {
             float component = token->data.vectorData.components[i];
             int componentStringSize = componentSizes[i];

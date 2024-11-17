@@ -39,6 +39,6 @@ typedef struct {
 } AllFragments;
 
 FileData getData(char *);
-AllTokens tokenize(FileData);
+AllTokens tokenize(AllFragments);
 void printToken(Token *);
-AllFragments splitStringTokens(FileData);
+AllFragments splitStringFragments(FileData);

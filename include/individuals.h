@@ -1,14 +1,10 @@
 #ifndef INDIVIDUALS_H
 #define INDIVIDUALS_H
 typedef enum {
-    ScalarScalarAddition,
-    ScalarScalarSubtraction,
-    ScalarScalarMultiplication,
-    ScalarScalarDivision,
-    VectorAddition,
-    VectorSubtraction,
-    VectorScalarMultiplication,
-    VectorScalarDivision,
+    Addition,
+    Subtraction,
+    Multiplication,
+    Division,
 } Operand;
 
 typedef enum {

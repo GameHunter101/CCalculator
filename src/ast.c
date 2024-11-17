@@ -33,13 +33,13 @@ float executeNode(Node *root) {
     float leftValue = executeNode(root->left);
     float rightValue = executeNode(root->right);
     switch (root->data.data.op) {
-    case ScalarScalarAddition:
+    case Addition:
         return leftValue + rightValue;
-    case ScalarScalarSubtraction:
+    case Subtraction:
         return leftValue - rightValue;
-    case ScalarScalarMultiplication:
+    case Multiplication:
         return leftValue * rightValue;
-    case ScalarScalarDivision:
+    case Division:
         return leftValue / rightValue;
     default:
         return INT_MAX;

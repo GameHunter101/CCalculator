@@ -8,15 +8,15 @@
 int main() {
     FileData data = getData("../data.txt");
 
-    AllFragments tokens = splitStringTokens(data);
+    AllFragments fragments = splitStringFragments(data);
 
-    /* printf("Main print:\n");
-    for (int i = 0; i < tokens.fragmentCount; i++) {
-        // printToken(&tokens.fragments[i]);
-        printf("Fragment: %s\n", tokens.fragments[i]);
-        free(tokens.fragments[i]);
-    } */
-    free(tokens.fragments);
+    AllTokens tokens = tokenize(fragments);
+
+    free(fragments.fragments);
+
+    for (int i = 0; i < tokens.tokenCount; i++) {
+        printToken(&tokens.tokens[i]);
+    }
 
     // free(tokens.);
     free(data.string);
