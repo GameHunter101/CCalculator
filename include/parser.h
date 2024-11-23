@@ -1,11 +1,6 @@
 #include "individuals.h"
 
 typedef struct {
-    char *string;
-    int stringLength;
-} FileData;
-
-typedef struct {
     Token *tokens;
     int tokenCount;
 } AllTokens;
@@ -39,6 +34,7 @@ typedef struct {
 } AllFragments;
 
 FileData getData(char *);
-AllTokens tokenize(AllFragments);
+Token tokenize(char *);
 void printToken(Token *);
-AllFragments splitStringFragments(FileData);
+char *getFragment(char *, int, char**);
+void cleanUpTokens(AllTokens);

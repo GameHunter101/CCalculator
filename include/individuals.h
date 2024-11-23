@@ -1,5 +1,11 @@
 #ifndef INDIVIDUALS_H
 #define INDIVIDUALS_H
+
+typedef struct {
+    char *string;
+    int stringLength;
+} FileData;
+
 typedef enum {
     Addition,
     Subtraction,
@@ -11,6 +17,7 @@ typedef enum {
     ScalarValueToken,
     VectorValueToken,
     OperandToken,
+    EmptyToken,
 } TokenType;
 
 typedef struct {
@@ -19,10 +26,15 @@ typedef struct {
 } VectorData;
 
 typedef struct {
+    Operand op;
+    int parameterCount;
+} OperandData;
+
+typedef struct {
     TokenType type;
     union {
         float value;
-        Operand op;
+        OperandData operandData;
         VectorData vectorData;
     } data;
 } Token;
